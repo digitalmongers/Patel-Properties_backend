@@ -81,10 +81,10 @@ const ENV = {
     TEST: 'test',
 };
 
-// Regex Patterns for strict validation
 const REGEX = {
     EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    PHONE: /^[6-9]\d{9}$/,
+    // Relaxed phone regex to allow international formats like (555) 123-4567
+    PHONE: /^[\d\s()+-]{7,20}$/,
     // Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character
     PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#.])[A-Za-z\d@$!%*?&#.]{8,}$/,
     MONGODB_ID: /^[0-9a-fA-F]{24}$/,
@@ -96,18 +96,17 @@ const ROLES = {
     USER: 'user',
 };
 
-// Example Model Statuses (For Patel Properties specific logic)
-const CONTACT_STATUS = {
-    PENDING: 'pending',
-    RESOLVED: 'resolved',
-    IGNORED: 'ignored',
-};
-
 // System App Modes
 const SYSTEM_MODE = {
     LIVE: 'live',
     MAINTENANCE: 'maintenance'
 };
+
+const PROPERTY_INTERESTS = [
+    '526 Whitener Dr, Dalton, GA',
+    '436 Whitener Dr, Dalton, GA',
+    'General Inquiry'
+];
 
 module.exports = {
     HTTP_STATUS,
@@ -117,6 +116,6 @@ module.exports = {
     ENV,
     REGEX,
     ROLES,
-    CONTACT_STATUS,
-    SYSTEM_MODE
+    SYSTEM_MODE,
+    PROPERTY_INTERESTS
 };

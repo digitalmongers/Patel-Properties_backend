@@ -8,6 +8,10 @@ const envSchema = z.object({
     MONGODB_URI: z.string().url('MONGODB_URI must be a valid connection string'),
     ALLOWED_ORIGINS: z.string().default(''), // Comma separated CORS whitelist
     LOG_LEVEL: z.enum(['error', 'warn', 'info', 'http', 'debug']).default('info'),
+    SENDGRID_API_KEY: z.string().optional(),
+    SENDGRID_FROM_EMAIL: z.string().email().default('info@digitalmongers.com'),
+    SENDGRID_FROM_NAME: z.string().default('Patel Properties'),
+    OWNER_EMAIL: z.string().email().default('info@digitalmongers.com'),
 });
 
 // Parse and validate the environment variables

@@ -14,10 +14,19 @@ const devLogFormat = printf(({ level, message, timestamp, stack, ...meta }) => {
     return log;
 });
 
+const flattenMeta = winston.format((info) => {
+    if (info.metadata) {
+        Object.assign(info, info.metadata);
+        delete info.metadata;
+    }
+    return info;
+});
+
 const prodLogFormat = combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }),
     metadata({ fillExcept: ['message', 'level', 'timestamp', 'label'] }),
+    flattenMeta(),
     json()
 );
 

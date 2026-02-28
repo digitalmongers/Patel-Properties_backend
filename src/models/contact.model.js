@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { PROPERTY_INTERESTS } = require('../constants');
 
 const contactSchema = new mongoose.Schema(
     {
@@ -15,16 +16,17 @@ const contactSchema = new mongoose.Schema(
         },
         phone: {
             type: String,
+            required: true,
             trim: true,
+        },
+        propertyInterest: {
+            type: String,
+            required: true,
+            enum: PROPERTY_INTERESTS,
         },
         message: {
             type: String,
             required: true,
-        },
-        status: { 
-            type: String,
-            enum: ['pending', 'resolved', 'ignored'],
-            default: 'pending',
         },
     },
     {
@@ -33,7 +35,6 @@ const contactSchema = new mongoose.Schema(
 );
 
 // Add index for faster queries
-contactSchema.index({ status: 1 });
 contactSchema.index({ createdAt: -1 });
 
 const Contact = mongoose.model('Contact', contactSchema);
