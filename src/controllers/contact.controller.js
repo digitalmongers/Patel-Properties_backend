@@ -12,7 +12,7 @@ const getContacts = catchAsync(async (req, res) => {
     const contacts = await contactService.getAllContacts(req.query);
     res.status(HTTP_STATUS.OK).send(new ApiResponse(HTTP_STATUS.OK, contacts, SUCCESS_MESSAGES.FETCHED));
 });
-
+ 
 const getContact = catchAsync(async (req, res) => {
     const contact = await contactService.getContact(req.params.contactId);
     res.status(HTTP_STATUS.OK).send(new ApiResponse(HTTP_STATUS.OK, contact, SUCCESS_MESSAGES.FETCHED));

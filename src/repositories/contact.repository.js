@@ -22,5 +22,5 @@ class ContactRepository {
         return await Contact.findByIdAndDelete(id);
     }
 }
-
+   
 module.exports = new ContactRepository();
