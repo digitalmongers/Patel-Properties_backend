@@ -11,6 +11,9 @@ const requestLogger = require('./middlewares/requestLogger.middleware');
 
 const app = express();
 
+// Trust proxy for Render/Vercel/Heroku to get real client IP for rate limiting
+app.set('trust proxy', 1);
+
 // Set security middlewares
 configureSecurity(app);
 
@@ -30,6 +33,16 @@ app.use(requestIdMiddleware);
 
 // Advanced enterprise request/response logger
 app.use(requestLogger);
+
+// Root route for basic health check and welcome message
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Welcome to Patel Properties API',
+        version: '1.0.0',
+        status: 'Operational'
+    });
+});
 
 // v1 api routes
 app.use('/api/v1', routes);
