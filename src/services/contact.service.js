@@ -1,26 +1,31 @@
 const contactRepository = require('../repositories/contact.repository');
+const emailService = require('./email.service');
 const AppError = require('../utils/AppError');
 const { HTTP_STATUS, ERROR_MESSAGES } = require('../constants');
 
 class ContactService {
     async submitContactForm(contactData) {
-        // Here we can add business logic, e.g., checking if ip is rate limited,
-        // sending a confirmation email, notifying admins via slack/email, etc.
-
+        // Create the contact entry in the database
         const contact = await contactRepository.create(contactData);
 
-        // Example: sendEmail(contact.email, 'Thank you for contacting us!');
-        // Example: notifyAdmin('New contact submission from ' + contact.name);
+        // Fire & Forget email dispatch to prevent blocking the HTTP response
+        emailService.sendContactToOwner(contact).catch(err => {
+            // Error is handled inside emailService itself, this catch ensures no unhandled promises bubble up
+            require('../utils/logger').error('SendGrid Owner Notification Failed', { error: err });
+        });
+
+        emailService.sendAcknowledgementToUser(contact).catch(err => {
+            require('../utils/logger').error('SendGrid User Acknowledgment Failed', { error: err });
+        });
 
         return contact;
     }
 
     async getAllContacts(query) {
-        const { page = 1, limit = 10, status } = query;
+        const { page = 1, limit = 10 } = query;
         const skip = (page - 1) * limit;
 
         const filter = {};
-        if (status) filter.status = status;
 
         return await contactRepository.findAll(filter, { limit: parseInt(limit), skip });
     }
