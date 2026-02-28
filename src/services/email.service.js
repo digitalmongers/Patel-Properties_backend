@@ -1,9 +1,21 @@
 const sgMail = require('@sendgrid/mail');
+const mgModule = require('mailgun.js');
+const formData = require('form-data');
 const env = require('../configs/env');
 const Logger = require('../utils/logger');
 
 if (env.SENDGRID_API_KEY) {
     sgMail.setApiKey(env.SENDGRID_API_KEY);
+}
+
+let mgClient = null;
+if (env.MAILGUN_API_KEY && env.MAILGUN_DOMAIN) {
+    const mg = new mgModule(formData);
+    mgClient = mg.client({
+        username: 'api',
+        key: env.MAILGUN_API_KEY,
+        url: env.MAILGUN_HOST ? `https://${env.MAILGUN_HOST}` : 'https://api.mailgun.net'
+    });
 }
 
 const OWNER_EMAIL = env.OWNER_EMAIL;
@@ -21,28 +33,52 @@ class EmailService {
      * @returns {Promise<void>}
      */
     async sendEmail(to, subject, text, html, replyTo = null) {
-        if (!env.SENDGRID_API_KEY) {
-            Logger.warn('SENDGRID_API_KEY not set. Email not sent.', { to, subject });
-            return;
+        let sent = false;
+
+        // 1. Try SendGrid first
+        if (env.SENDGRID_API_KEY) {
+            try {
+                const msg = {
+                    to,
+                    from: {
+                        email: FROM_EMAIL,
+                        name: FROM_NAME,
+                    },
+                    ...(replyTo && { replyTo }),
+                    subject,
+                    text,
+                    html,
+                };
+                await sgMail.send(msg);
+                Logger.info(`Email sent successfully via SendGrid to ${to}`, { subject });
+                sent = true;
+            } catch (error) {
+                Logger.warn(`SendGrid failed to send email to ${to}. Attempting fallback...`, {
+                    error: error.response ? error.response.body : error.message
+                });
+            }
         }
 
-        const msg = {
-            to,
-            from: {
-                email: FROM_EMAIL,
-                name: FROM_NAME,
-            },
-            ...(replyTo && { replyTo }),
-            subject,
-            text,
-            html,
-        };
+        // 2. Fallback to Mailgun
+        if (!sent && mgClient) {
+            try {
+                await mgClient.messages.create(env.MAILGUN_DOMAIN, {
+                    from: `${FROM_NAME} <${FROM_EMAIL}>`,
+                    to: [to],
+                    subject,
+                    text,
+                    html,
+                    ...(replyTo && { 'h:Reply-To': replyTo })
+                });
+                Logger.info(`Email sent successfully via Mailgun to ${to}`, { subject });
+                sent = true;
+            } catch (error) {
+                Logger.error(`Mailgun failed to send email to ${to}`, { error: error.message });
+            }
+        }
 
-        try {
-            await sgMail.send(msg);
-            Logger.info(`Email sent successfully to ${to}`, { subject });
-        } catch (error) {
-            Logger.error(`Error sending email to ${to}`, { error: error.response ? error.response.body : error.message });
+        if (!sent) {
+            Logger.error(`All email providers failed or are unconfigured for ${to}`, { subject });
         }
     }
 

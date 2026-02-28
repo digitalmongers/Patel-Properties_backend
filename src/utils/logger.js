@@ -41,7 +41,7 @@ const transports = [
     new winston.transports.Console({
         handleExceptions: true,
         handleRejections: true,
-        format: process.env.NODE_ENV === 'production' ? prodLogFormat : developmentFormat,
+        // Remove format here to use the logger's format
     })
 ];
 
@@ -53,7 +53,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.PERSISTENT_LOGS === 'tr
             zippedArchive: true,
             maxSize: '20m',
             maxFiles: '14d',
-            format: prodLogFormat,
+            // Remove format here
         }),
         new DailyRotateFile({
             filename: path.join(__dirname, '../../logs/%DATE%-error.log'),
@@ -62,7 +62,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.PERSISTENT_LOGS === 'tr
             zippedArchive: true,
             maxSize: '10m',
             maxFiles: '30d',
-            format: prodLogFormat,
+            // Remove format here
         })
     );
 }
@@ -118,7 +118,12 @@ class Logger {
     }
 
     static logResponse(req, res, responseTime, responseBody = null) {
-        logger[res.statusCode >= 400 ? 'warn' : 'http']('HTTP Response', sanitize({
+        let level = 'http';
+        if (res.statusCode >= 500) level = 'error';
+        else if (res.statusCode >= 400 && res.statusCode !== 404) level = 'warn';
+        else if (res.statusCode === 404) level = 'info';
+
+        logger[level]('HTTP Response', sanitize({
             ...RequestContext.getAll(),
             requestId: req.requestId || req.id,
             method: req.method,
